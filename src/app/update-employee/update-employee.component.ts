@@ -1,9 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Apollo } from 'apollo-angular';
-import gql from 'graphql-tag';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NgIf } from '@angular/common';
+
+import { GraphQLApiService } from '../service/graph-ql-api.service';
 
 // Angular Material 
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -32,9 +32,10 @@ export class UpdateEmployeeComponent {
   empId!: string;
 
   formBuilder = inject(FormBuilder);
-  apollo = inject(Apollo);
   router = inject(Router); 
   private route = inject(ActivatedRoute);
+  graphqlApi = inject(GraphQLApiService);
+
 
   ngOnInit() : void{
     this.employeeForm  = this.formBuilder.group({
@@ -51,27 +52,7 @@ export class UpdateEmployeeComponent {
 
     this.empId = this.route.snapshot.paramMap.get('id') || '';
 
-    this.apollo.query({
-      query: gql`
-        query getEmployeeByID($getEmployeeByIdId: ID!) {
-          getEmployeeByID(id: $getEmployeeByIdId) {
-            id
-            first_name
-            last_name
-            email
-            gender
-            designation
-            salary
-            date_of_joining
-            department
-            employee_photo
-            created_at
-            updated_at
-          }
-        }
-      `,
-      variables: { getEmployeeByIdId: this.empId }
-    }).subscribe({
+    this.graphqlApi.getEmployeeByID(this.empId).subscribe({
       next: (res: any) => {
         const emp = res.data.getEmployeeByID;
         const patch = {
@@ -102,29 +83,8 @@ export class UpdateEmployeeComponent {
   submit(): void {
     if (this.employeeForm.valid) {
       const formValue = this.employeeForm.value;
-      this.apollo.mutate({
-        mutation: gql`
-          mutation UpdateEmployee(
-          $updateEmployeeId: ID!, 
-          $first_name: String!, $last_name: String!, 
-          $email: String!, $gender: String!, 
-          $designation: String!, $salary: Float!, 
-          $date_of_joining: String!, 
-          $department: String!, 
-          $employee_photo: String) {
-          updateEmployee(
-          id: $updateEmployeeId, first_name: $first_name, last_name: $last_name, 
-          email: $email, gender: $gender, designation: $designation, 
-          salary: $salary, date_of_joining: 
-          $date_of_joining, department: $department, 
-          employee_photo: $employee_photo) {
-            id
-          }
-        }`,
-        variables: { updateEmployeeId: this.empId,
-          ...this.employeeForm.value},
-          errorPolicy: 'all'
-      }).subscribe({
+      this.graphqlApi.updateEmployee(this.empId, formValue)
+      .subscribe({
         next: (res) => {
           if (res.errors && res.errors.length > 0) {
             alert(res.errors[0].message);

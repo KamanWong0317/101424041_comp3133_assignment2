@@ -1,9 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Apollo } from 'apollo-angular';
-import gql from 'graphql-tag';
 import { Router } from '@angular/router';
 import { NgIf } from '@angular/common';
+
+import { GraphQLApiService } from '../service/graph-ql-api.service';
 
 // Angular Material 
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -31,8 +31,8 @@ export class AddemployeeComponent {
   employeeForm: any;
 
   formBuilder = inject(FormBuilder);
-  apollo = inject(Apollo);
   router = inject(Router); 
+  graphqlApi = inject(GraphQLApiService);
 
   ngOnInit() : void{
     this.employeeForm  = this.formBuilder.group({
@@ -65,41 +65,11 @@ export class AddemployeeComponent {
   submit(): void {
     if (this.employeeForm.valid) {
       const variables = this.employeeForm.value;
-     
-      this.apollo.mutate({
-        mutation: gql`
-          mutation addEmployee(
-            $first_name: String!,
-            $last_name: String!,
-            $email: String!,
-            $gender: String!,
-            $designation: String!,
-            $salary: Float!,
-            $date_of_joining: String!,
-            $department: String!,
-            $employee_photo: String
-          ) {
-            addEmployee(
-              first_name: $first_name,
-              last_name: $last_name,
-              email: $email,
-              gender: $gender,
-              designation: $designation,
-              salary: $salary,
-              date_of_joining: $date_of_joining,
-              department: $department,
-              employee_photo: $employee_photo
-            ) {
-              id
-            }
-          }
-        `,
-        variables,       
-        errorPolicy: 'all'
-      }).subscribe({
-        next: (res) => {
+  
+      this.graphqlApi.addEmployee(variables).subscribe({
+        next: (res: any) => {
           if (res.errors && res.errors.length > 0) {
-            alert(res.errors[0].message);         
+            alert(res.errors[0].message);
           } else {
             alert('Employee added successfully!');
             this.router.navigate(['/employees']);

@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIf } from '@angular/common';
-import gql from 'graphql-tag';
-import { Apollo } from 'apollo-angular';
 import { Router } from '@angular/router';
+
+import { GraphQLApiService } from '../service/graph-ql-api.service';
 
 
 // // Angular Material 
@@ -27,8 +27,9 @@ export class SignupComponent {
 
   constructor(
     private formBuilder: FormBuilder,
-    private apollo: Apollo,
-    private router: Router){}
+    private router: Router,
+    private graphqlApi : GraphQLApiService
+  ){}
 
   ngOnInit() : void{
     this.signupForm = this.formBuilder.group({
@@ -47,18 +48,7 @@ export class SignupComponent {
     if (this.signupForm?.valid) {
       const { username, email, password } = this.signupForm.value;
 
-      this.apollo.mutate({
-        mutation: gql`
-          mutation Signup($username: String!, $email: String!, $password: String!) {
-            signup(username: $username, email: $email, password: $password) {
-              username
-              email
-            }
-          }
-        `,
-        variables: { username, email, password },
-        errorPolicy: 'all' 
-      }).subscribe({
+      this.graphqlApi.signup(username, email, password).subscribe({
         next: (res: any) => {
           if (res.errors && res.errors.length > 0) {
             alert(res.errors[0].message); 

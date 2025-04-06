@@ -1,8 +1,9 @@
 import { Component, inject } from '@angular/core';
-import { Apollo } from 'apollo-angular';
-import gql from 'graphql-tag';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+
+import { GraphQLApiService } from '../service/graph-ql-api.service';
+
 // employee details
 import { MatDialog } from '@angular/material/dialog';
 import { EmployeeDetailsComponent } from '../employee-details/employee-details.component'; 
@@ -33,7 +34,7 @@ import { MatButtonModule } from '@angular/material/button';
   styleUrl: './employees.component.css'
 })
 export class EmployeesComponent {
-  apollo = inject(Apollo);
+  graphqlApi = inject(GraphQLApiService);
   router = inject(Router);
   dialog = inject(MatDialog);
 
@@ -62,29 +63,10 @@ export class EmployeesComponent {
   }
 
   getEmployees(): void{
-    this.apollo.query({
-      query: gql`
-        query {
-          getAllEmployees {
-            id
-            first_name
-            last_name
-            email
-            gender
-            designation
-            salary
-            department
-            created_at
-            updated_at
-            date_of_joining
-            employee_photo
-          }
-        }
-      `
-    }).subscribe({
-      next: (res: any) => {
-        this.employees = res.data.getAllEmployees;
-        this.dataSource.data = this.employees;
+    this.graphqlApi.getAllEmployees().subscribe({
+      next: (employees) => {
+        this.employees = employees;
+        this.dataSource.data = employees;
       },
       error: (err) => {
         console.error('Error fetching employees:', err);
@@ -94,26 +76,13 @@ export class EmployeesComponent {
   }
 
   searchEmployees(): void {
-    const { department, designation } = this.searchForm.value;
-
-    this.apollo.query({
-      query: gql`
-        query Search($department: String, $designation: String) {
-          searchEmployees(department: $department, designation: $designation) {
-            id
-            first_name
-            last_name
-            email
-            department
-            designation
-          }
-        }
-      `,
-      variables: { department, designation },
-    }).subscribe({
-      next: (res: any) => {
-        this.employees = res.data.searchEmployees;
-        this.dataSource.data = this.employees;
+    const department = this.searchForm.value.department ?? '';
+    const designation = this.searchForm.value.designation ?? '';
+    
+    this.graphqlApi.searchEmployees(department, designation).subscribe({
+      next: (employees) => {
+        this.employees = employees;
+        this.dataSource.data = employees;
       },
       error: (err) => {
         console.error('Error search employees:', err);
@@ -138,16 +107,7 @@ export class EmployeesComponent {
   }
   
   deleteEmployee(id: string): void {
-    this.apollo.mutate({
-      mutation: gql`
-        mutation DeleteEmployee($id: ID!) {
-          deleteEmployee(id: $id)
-        }
-      `,
-      variables: { id },
-      errorPolicy: 'all'
-
-    }).subscribe({
+    this.graphqlApi.deleteEmployee(id).subscribe({
       next: (res: any) => {
         if (res.errors && res.errors.length > 0) {
           alert(res.errors[0].message); 

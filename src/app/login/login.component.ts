@@ -1,9 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
-import { Apollo } from 'apollo-angular';
-import gql from 'graphql-tag';
 import { Router } from '@angular/router';
+import { GraphQLApiService } from '../service/graph-ql-api.service';
 
 // // Angular Material 
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,8 +22,8 @@ export class LoginComponent {
   loginForm: any;
 
   formBuilder = inject(FormBuilder);
-  apollo = inject(Apollo);
   router = inject(Router); 
+  graphqlApi = inject(GraphQLApiService);
 
   ngOnInit() : void{
     this.loginForm = this.formBuilder.group({
@@ -36,28 +35,15 @@ export class LoginComponent {
   submitForm(): void {
     if (this.loginForm?.valid) {
       const { identifier, password } = this.loginForm.value;
-      const isEmail = identifier.includes('@');
-
-      this.apollo.query({
-        query: gql`
-          query Login($username: String, $email: String, $password: String!) {
-            login(username: $username, email: $email, password: $password)
-          }
-        `,
-        variables: {
-          username: isEmail ? null : identifier,
-          email: isEmail ? identifier : null,
-          password: password
-        },
-         errorPolicy: 'all'
-      }).subscribe({
+  
+      this.graphqlApi.login(identifier, password).subscribe({
         next: (res: any) => {
           if (res.errors && res.errors.length > 0) {
             alert(res.errors[0].message);
-          }else {
+          } else {
             const token = res.data.login;
             localStorage.setItem('token', token);
-            alert('Login successful!'); 
+            alert('Login successful!');
             this.router.navigate(['/employees']);
           }
         },
