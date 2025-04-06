@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>Employee Details</h2>
+<div mat-dialog-content>
+  <p><strong>First Name:</strong> {{ data.first_name }}</p>
+  <p><strong>Last Name:</strong> {{ data.last_name }}</p>
+  <p><strong>Email:</strong> {{ data.email }}</p>
+  <p><strong>Gender:</strong> {{ data.gender }}</p>
+  <p><strong>Department:</strong> {{ data.department }}</p>
+  <p><strong>Designation:</strong> {{ data.designation }}</p>
+  <p><strong>Salary:</strong> {{ data.salary }}</p>
+  <p><strong>Date Joined:</strong> {{ data.date_of_joining  | date:'yyyy-MM-dd' }}</p>
+  <p><strong>Photo:</strong> {{ data.employee_photo }}</p>
+  <p><strong>Created At:</strong> {{ data.created_at  | date:'yyyy-MM-dd' }}</p>
+  <p><strong>Last Updated:</strong> {{ data.updated_at | date:'yyyy-MM-dd' }}</p>
+</div>
